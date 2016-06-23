@@ -1,0 +1,26 @@
+{
+  "name": "url-shortener",
+  "version": "1.0.0",
+  "description": "https://www.freecodecamp.com/challenges/url-shortener-microservice",
+  "engines": {
+    "node": "6.2.0"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Alistair Martin",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/martalist/fcc-url-shortener"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ]
+}
