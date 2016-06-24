@@ -1,27 +1,58 @@
 const express = require('express')
-    , router = express.Router()
+    , mongo = require('mongodb').MongoClient
     , URLRegExp = require('url-regexp');
 
+const router = express.Router()
+    , url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/url_shortener';
+
 router.get('/', (req, res) => {
-  res.end('You need to add a proper url');
+  res.redirect('/');
 });
 
 router.get(/.*/i, (req, res) => {
-  const original_url = req.url.slice(1);
+  const originalUrl = req.url.slice(1);
 
-  // Is it a valid url?
-  if ( URLRegExp.validate(original_url) ) {
-    // add to db
-    // return json { "original_url":"http://foo.com:80", "short_url":"https://little-url.herokuapp.com/8170" }
-    res.json({
-      original_url,
-      valid_url: true
+  if ( URLRegExp.validate(originalUrl) ) {
+    mongo.connect(url, (err, db) => {
+      if (err) {
+        console.error('There was a problem connecting to the db', err);
+      }
+      getShortUrlAndInsert(db, res, originalUrl);
     });
+  } else {
+    res.json({error: '"' + originalUrl + '" is not a valid url'});
   }
-  else {
-    res.end('"' + original_url + '" is not a valid url');
-  }
-  // else
 });
+
+
+function getShortUrlAndInsert(db, res, originalUrl) {
+  // fetch counter
+  db.collection('counter').findOneAndUpdate({}
+    , {$inc: {count:1}}
+    , {
+      returnOriginal: false,
+      upsert: true
+    }
+    , (err, doc) => {
+      if (err) console.error(err);
+      insertUrl(db, res, doc.value.count, originalUrl);
+    }
+  );
+}
+
+function insertUrl(db, res, shortUrl, originalUrl) {
+  // insert into db
+  db.collection('urls').insert({
+    shortUrl,
+    originalUrl
+  }, (err, doc) => {
+    if (err) console.error(err);
+    res.json({
+      original_url: originalUrl,
+      short_url: shortUrl,
+    });
+    db.close();
+  });
+}
 
 module.exports = router;
