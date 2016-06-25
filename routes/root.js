@@ -1,5 +1,8 @@
 const express = require('express')
-    , router = express.Router();
+    , mongo = require('mongodb').MongoClient;
+
+const router = express.Router()
+    , url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/url_shortener';
 
 router.get('/', (req, res) => {
   app.render('index', (err) => {
@@ -7,14 +10,22 @@ router.get('/', (req, res) => {
   });
 });
 
-router.get('/:shortURL', (req, res, next) => {
-  const { shortURL } = req.params;
-  // fetch url from db
-    // if it doesn't exist, return an error as json
-    // eg. { error: "This url is not on the database." }
-  // redirect
-  // res.redirect();
-  res.end(shortURL); // remove this line after implementing above
+router.get('/:shortUrl', (req, res, next) => {
+  const { shortUrl } = req.params;
+  mongo.connect(url, (err, db) => {
+    if (err) {
+      console.error('There was a problem connecting to the db', err);
+    }
+    db.collection('urls').find({shortUrl: +shortUrl}).next((err, result) => {
+      if (err) console.error(err);
+      if (!result) {
+        res.json({error: shortUrl + " is not in the database."});
+      } else {
+        res.redirect(result.originalUrl);
+      }
+      db.close();
+    });
+  });
 });
 
 module.exports = router;
