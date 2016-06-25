@@ -5,9 +5,9 @@ const router = express.Router()
     , url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/url_shortener';
 
 router.get('/', (req, res) => {
-  app.render('index', (err) => {
-    if (err) throw err;
-  });
+  const { protocol, headers: { host }} = req
+      , domain = protocol + '://' + host;
+  res.render('index', { domain });
 });
 
 router.get('/:shortUrl', (req, res, next) => {
